@@ -16,13 +16,12 @@ const checkAuth = async (req, res, next)=> {
             req.usuario = await Usuario.findById(decoded.id).select("-password -confirmado -token -createdAt -updatedAt -__v")
 
         } catch (error) {
-            console.log(error);
             return res.status(404).json({msg:"el token es incorrecto o esta expirado"})
         }
     }
     if (!token) {
         const error = new Error("Hubo un error")
-        return res.status(404).json({msg:error.message})
+        return res.status(401).json({msg:error.message})
     }
     next()
 }
