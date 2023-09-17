@@ -1,4 +1,5 @@
 import Proyecto from "../model/Proyecto.js"
+import Tarea from "../model/Tareas.js"
 import mongoose from "mongoose"
 const obtenerProyectos = async (req, res) => {
     const proyectos = await Proyecto.find().where("creador").equals(req.usuario)
@@ -35,7 +36,11 @@ const obtenerProyecto = async (req, res) => {
         return res.status(401).json({msg:error.message})
     }
 
-    res.json(proyecto)
+    // obtener Tareas del proyecto
+
+    const tareas = await Tarea.find().where("proyecto").equals(proyecto._id)
+
+    res.json({proyecto,tareas})
 }
 
 const editarProyectos = async (req, res) => {
@@ -102,7 +107,20 @@ const agregarColaborador = async (req, res) => {}
 
 const eliminarColaborador = async (req, res) => {}
 
-const obtenerTareas = async (req, res) => {}
+const obtenerTareas = async (req, res) => {
+    const {id} = req.params
+
+    const valido = mongoose.Types.ObjectId.isValid(id)
+    
+    if (!valido) {
+        const error = new Error("No Encontrado")
+        return res.status(404).json({msg:error.message})
+    }
+
+    
+
+    res.json(tareas)
+}
 
 export {
     obtenerProyectos,
@@ -111,6 +129,5 @@ export {
     editarProyectos,
     eliminarProyecto,
     agregarColaborador,
-    eliminarColaborador,
-    obtenerTareas
+    eliminarColaborador
 }
