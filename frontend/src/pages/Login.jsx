@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 
 function Login() {
+  
   return (
     <>
     <h1 className='text-sky-600 font-black text-6xl capitalize'>inicia sesion y administra tus <span className=' text-gray-800'>proyectos</span></h1>
