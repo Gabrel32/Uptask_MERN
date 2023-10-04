@@ -1,6 +1,7 @@
 import Usuario from "../model/Usuarios.js";
 import { generarId } from "../helpers/index.js";
 import generarJWT from "../helpers/generarJWT.js";
+import { emailRegistro, emailOlvidePasword } from "../helpers/email.js";
 
 
 const registrar = async (req,res)=>{
@@ -19,8 +20,18 @@ const registrar = async (req,res)=>{
     try {
         const usuario = new Usuario(req.body)
         usuario.token = generarId()
-        const usuarioAlmacenado = await usuario.save() 
-        res.json(usuarioAlmacenado)
+        const usuarioAlmacenado = await usuario.save()
+        
+        // enviar el email de confirmacion 
+
+        emailRegistro({
+            email: usuario.email,
+            nombre: usuario.nombre,
+            token: usuario.token,
+            
+        })
+
+        res.json({msg:"Usuario Creado Correctamente, Revisa tu Email para Confirmar tu Cuenta"})
     } catch (error) {
         console.log(error);
     }
@@ -60,6 +71,7 @@ const autenticar = async (req, res) => {
 const confirmar = async (req, res) => {
     const {token} = req.params
     const usuarioConfirmar = await Usuario.findOne({token})
+    
     if (!usuarioConfirmar) {
         const error = new Error("el token es incorrecto o esta expirado")
         return res.status(404).json({msg:error.message})
@@ -87,6 +99,14 @@ const olvidePassword = async (req, res) => {
     try {
         usuario.token = generarId()
         usuario.save()
+    //  Enviando el email
+
+        emailOlvidePasword({
+            email: usuario.email,
+            nombre: usuario.nombre,
+            token: usuario.token,
+        })
+        
         res.json({msg:"Hemos enviado un email con las instrucciones a tu correo"})
     } catch (error) {
         console.log(error);

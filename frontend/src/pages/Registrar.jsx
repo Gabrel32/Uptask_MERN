@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { useState } from "react"
 import Alerta from "../components/Alerta"
+import clienteAxios from "../config/clienteAxios"
 
 function Registrar() {
     const [nombre, setNombre] = useState("")
@@ -9,7 +10,7 @@ function Registrar() {
     const [password2, setPassword2] = useState("")
     const [alerta, setAlerta] = useState({})
 
-    function handleSubmit(e){
+    async function handleSubmit(e){
         e.preventDefault()
 
         if ([nombre,email,password,password2].includes("")) {
@@ -33,15 +34,26 @@ function Registrar() {
             })
 
         }
-
         setAlerta({})
         setNombre("")
         setEmail("")
         setPassword("")
         setPassword2("")
+        
+        try {
+            const {data} = await clienteAxios.post(`/usuarios`,{nombre,email,password})
 
-        console.log("creando...");
-
+            setAlerta({
+                msg:data.msg,
+                error:false
+            })
+        } catch (error) {
+            setAlerta({
+                msg:error.response.data.msg,
+                error:true
+            })
+        }
+        
         
     }
 
