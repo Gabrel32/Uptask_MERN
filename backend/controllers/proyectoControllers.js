@@ -1,13 +1,15 @@
 import Proyecto from "../model/Proyecto.js"
 import Tarea from "../model/Tareas.js"
 import mongoose from "mongoose"
+import Usuario from "../model/Usuarios.js"
+
 const obtenerProyectos = async (req, res) => {
     const proyectos = await Proyecto.find().where("creador").equals(req.usuario)
     
     res.json(proyectos)
 }
 
-const nuevoProyecto = async (req, res) => {
+const nuevoProyecto = async (req, res) => { 
     const proyecto = new Proyecto(req.body)
     proyecto.creador = req.usuario._id
 
@@ -29,7 +31,7 @@ const obtenerProyecto = async (req, res) => {
         return res.status(404).json({msg:error.message})
     }
     
-    const proyecto = await Proyecto.findById(id)
+    const proyecto = await Proyecto.findById(id).populate('tareas').populate("colaboradores","nombre email")
 
     if (proyecto.creador.toString() !== req.usuario._id.toString()) {
         const error = new Error("No tienes los permisos necesarios")
@@ -40,7 +42,7 @@ const obtenerProyecto = async (req, res) => {
 
     const tareas = await Tarea.find().where("proyecto").equals(proyecto._id)
 
-    res.json({proyecto,tareas})
+    res.json(proyecto)
 }
 
 const editarProyectos = async (req, res) => {
@@ -103,9 +105,80 @@ const eliminarProyecto = async (req, res) => {
 
 }
 
-const agregarColaborador = async (req, res) => {}
+const buscarColaborador = async (req, res) => {
+    const {email} = req.body
+    const usuario = await Usuario.findOne({email}).select("-confirmado -createdAt -updatedAt -__v -token -password")
 
-const eliminarColaborador = async (req, res) => {}
+    if (!usuario) {
+        const error = new Error("usuario no encontrado")
+        return res.status(404).json({msg:error.message})
+    }
+
+    res.json(usuario)
+
+
+}
+
+const agregarColaborador = async (req, res) => {
+    const {id} = req.params
+    const {email} = req.body
+    const proyecto = await Proyecto.findById(id)
+    const usuario = await Usuario.findOne({email}).select("-confirmado -createdAt -updatedAt -__v -token -password")
+
+    
+    if (!proyecto) {
+        const error = new Error("proyecto no encontrado");
+        return res.status(404).json({msg:error.message})
+    }
+    
+    if (proyecto.creador.toString() !== req.usuario._id.toString()) {
+        const error = new Error("solo el creador puede agregar colaboradoes");
+        return res.status(404).json({msg:error.message})
+    }
+
+    if (!usuario) {
+        const error = new Error("usuario no encontrado")
+        return res.status(404).json({msg:error.message})
+    }
+
+    if (proyecto.creador.toString() === usuario._id.toString()) {
+        const error = new Error("no puedes ser colaboardor en tu propio proyecto")
+        return res.status(404).json({msg:error.message})
+    }
+
+    if (proyecto.colaboradores.includes(usuario._id)) {
+        const error = new Error("este usuario ya pertenece al proyecto")
+        return res.status(404).json({msg:error.message})
+    }
+
+    // esta bien ahora se puede agregar
+    proyecto.colaboradores.push(usuario._id)
+    await proyecto.save()
+
+    res.json({msg:"colaborador agregado correctamente"})
+}
+
+const eliminarColaborador = async (req, res) => {
+    const {id} = req.params
+    const proyecto = await Proyecto.findById(id)
+    
+    if (!proyecto) {
+        const error = new Error("proyecto no encontrado");
+        return res.status(404).json({msg:error.message})
+    }
+    
+    if (proyecto.creador.toString() !== req.usuario._id.toString()) {
+        const error = new Error("solo el creador puede agregar colaboradoes");
+        return res.status(404).json({msg:error.message})
+    }
+
+    // esta bien ahora se puede eliminar
+    proyecto.colaboradores.pull(req.body._id)
+    await proyecto.save()
+
+    res.json({msg:"colaborador eliminado correctamente"})
+    
+}
 
 const obtenerTareas = async (req, res) => {
     const {id} = req.params
@@ -129,5 +202,6 @@ export {
     editarProyectos,
     eliminarProyecto,
     agregarColaborador,
-    eliminarColaborador
+    eliminarColaborador,
+    buscarColaborador
 }

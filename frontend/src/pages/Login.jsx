@@ -1,13 +1,14 @@
-import { Link, useNavigate } from "react-router-dom"
+import { Link, } from "react-router-dom"
 import { useState } from "react"
 import Alerta from "../components/Alerta"
 import clienteAxios from "../config/clienteAxios"
 import useAuth from "../hooks/useAuth"
+import { useNavigate } from "react-router-dom"
 
 function Login() {
+  const navigate = useNavigate()
 
-  const {setAuth} = useAuth()
-
+  const {setAuth, cargando} = useAuth()
 
   const [email,setEmail] = useState("")
   const [password,setPassword] = useState("")
@@ -40,6 +41,8 @@ function Login() {
       })
       localStorage.setItem("token",data.token)
       setAuth(data)
+      navigate("/proyectos")
+      
     } catch (error) {
       setAlerta({
         msg:error.response.data.msg,
